@@ -6,9 +6,9 @@ import org.jetbrains.projector.client.korge.state.ClientAction
 import org.jetbrains.projector.client.korge.state.ClientStateMachine
 import kotlin.random.Random
 
-class Application(stage: Stage) {
+class Application(private val stage: Stage) {
 
-    private val stateMachine = ClientStateMachine()
+    private val stateMachine = ClientStateMachine(stage)
     private val windowSizeController = WindowSizeController(stage, stateMachine)
 
     fun start() {
@@ -28,6 +28,7 @@ class Application(stage: Stage) {
 
         stateMachine.fire(
             ClientAction.Start(
+                stage = stage,
                 stateMachine = stateMachine,
                 url = url,
                 windowSizeController = windowSizeController

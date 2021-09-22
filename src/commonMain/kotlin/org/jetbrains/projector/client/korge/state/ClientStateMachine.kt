@@ -1,13 +1,11 @@
 package org.jetbrains.projector.client.korge.state
 
 import com.soywiz.klogger.Logger
-import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 
-class ClientStateMachine {
-
-  private val scope = GlobalScope
+class ClientStateMachine(private val scope: CoroutineScope) {
 
   private val eventQueue = Channel<ClientAction>(capacity = Channel.UNLIMITED)
 

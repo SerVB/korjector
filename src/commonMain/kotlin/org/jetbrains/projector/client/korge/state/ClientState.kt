@@ -1,6 +1,7 @@
 package org.jetbrains.projector.client.korge.state
 
 import com.soywiz.klogger.Logger
+import com.soywiz.korge.view.Stage
 import com.soywiz.korio.net.ws.WebSocketClient
 import org.jetbrains.projector.client.common.misc.ParamsProvider
 import org.jetbrains.projector.client.common.misc.TimeStamp
@@ -9,6 +10,7 @@ import org.jetbrains.projector.client.korge.WindowSizeController
 import org.jetbrains.projector.client.korge.misc.ClientStats
 import org.jetbrains.projector.client.korge.protocol.SupportedTypesProvider
 import org.jetbrains.projector.client.korge.window.OnScreenMessenger
+import org.jetbrains.projector.client.korge.window.WindowHeader
 import org.jetbrains.projector.common.misc.Do
 import org.jetbrains.projector.common.protocol.MessageDecoder
 import org.jetbrains.projector.common.protocol.MessageEncoder
@@ -30,8 +32,10 @@ sealed class ClientState {
 
   object UninitializedPage : ClientState() {
 
-    private fun configureWebPage(url: String): AppLayers {
-      return AppLayers { }  // todo: rewrite to korge
+    private suspend fun configureWebPage(stage: Stage, url: String): AppLayers {
+      WindowHeader.initIcons()
+      OnScreenMessenger.mainStage = stage
+
 //      document.body!!.apply {
 //        style.apply {
 //          backgroundColor = ParamsProvider.BACKGROUND_COLOR
@@ -68,8 +72,8 @@ sealed class ClientState {
 //
 //      reconnectionMessageUpdater(null)
 //
-//      OnScreenMessenger.showText("Starting connection", "Waiting for response from $url...", canReload = false)
-//
+      OnScreenMessenger.showText("Starting connection", "Waiting for response from $url...", canReload = false)
+
 //      if (!(window.asDynamic().isSecureContext as Boolean) && ParamsProvider.SHOW_NOT_SECURE_WARNING) {
 //        window.alert(buildString {
 //          append("Warning: You have opened this page in a not secure context. ")
@@ -84,11 +88,13 @@ sealed class ClientState {
 //      return AppLayers(
 //        reconnectionMessageUpdater = reconnectionMessageUpdater,
 //      )
+
+      return AppLayers { }  // todo: rewrite to korge
     }
 
     override suspend fun consume(action: ClientAction) = when (action) {
       is ClientAction.Start -> {
-        val layers = configureWebPage(action.url)
+        val layers = configureWebPage(action.stage, action.url)
 
         val webSocket = createWebSocketConnection(action.url, action.stateMachine)
           ?: object : WebSocketClient("${action.url} (bad url)", emptyList(), false) {}

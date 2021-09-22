@@ -1,11 +1,13 @@
 package org.jetbrains.projector.client.korge.state
 
+import com.soywiz.korge.view.Stage
 import org.jetbrains.projector.client.korge.WindowSizeController
 import org.jetbrains.projector.common.protocol.toServer.ClientEvent
 
 sealed class ClientAction {
 
   class Start(
+    val stage: Stage,
     val stateMachine: ClientStateMachine,
     val url: String,
     val windowSizeController: WindowSizeController,
