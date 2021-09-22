@@ -1,5 +1,7 @@
 package org.jetbrains.projector.client.common.misc
 
+import com.soywiz.korio.net.URL
+
 object ParamsProvider {
 
   val SYSTEM_SCALING_RATIO
@@ -7,10 +9,10 @@ object ParamsProvider {
   val USER_SCALING_RATIO: Double = 1.0
 
   val CLIPPING_BORDERS: Boolean = false
-  val HOST: String = "localhost"
-  val PORT: String = "8887"
-  val PATH: String = "/"
-  val RELAY_SERVER_ID: String? = null
+  var HOST: String = "localhost"
+  var PORT: String = "8887"
+  var PATH: String = "/"
+  var RELAY_SERVER_ID: String? = null
   val ENABLE_RELAY: Boolean get() = RELAY_SERVER_ID != null
   val LOG_UNSUPPORTED_EVENTS: Boolean = true
   val DOUBLE_BUFFERING: Boolean = false
@@ -26,8 +28,8 @@ object ParamsProvider {
   val SHOW_PROCESSING_TIME: Boolean = false
   val REPAINT_AREA: RepaintAreaSetting = RepaintAreaSetting.Disabled
   val SPECULATIVE_TYPING: Boolean = false
-  val ENABLE_WSS: Boolean = false
-  val HANDSHAKE_TOKEN: String? = null
+  var ENABLE_WSS: Boolean = false
+  var HANDSHAKE_TOKEN: String? = null
   val IDE_WINDOW_ID: Int? = null
   val SHOW_NOT_SECURE_WARNING: Boolean = false
   val REPAINT_INTERVAL_MS: Int = 333
@@ -35,6 +37,24 @@ object ParamsProvider {
   val BLOCK_CLOSING: Boolean = true
   val SCALING_RATIO: Double
     get() = SYSTEM_SCALING_RATIO * USER_SCALING_RATIO
+
+  fun loadParamsFromUrl(urlString: String): Boolean {
+    val url = URL(urlString)
+    HOST = url.host ?: return false
+    PORT = url.port.toString()
+
+    val queryMap = url.query?.let {
+      it.split("&").associate { pair ->
+        val res = pair.split("=")
+        if (res.size == 1) res.first() to null else res[0] to res[1]
+      }
+    } ?: emptyMap()
+
+    ENABLE_WSS = queryMap.containsKey("wss") || url.scheme == "https"
+    HANDSHAKE_TOKEN = queryMap["token"]
+    RELAY_SERVER_ID = queryMap["relayServerId"]
+    return true
+  }
 }
 
 sealed class RepaintAreaSetting {
