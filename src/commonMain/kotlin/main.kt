@@ -1,8 +1,6 @@
 import com.soywiz.klogger.Logger
 import com.soywiz.korge.Korge
-import com.soywiz.korge.view.centerOn
-import com.soywiz.korge.view.text
-import com.soywiz.korim.color.Colors
+import org.jetbrains.projector.client.korge.Application
 
 suspend fun main() = Korge(
     width = 800, height = 600,
@@ -10,5 +8,7 @@ suspend fun main() = Korge(
 ) {
     Logger.defaultLevel = Logger.Level.INFO
 
-    text("TODO", color = Colors.MAGENTA).centerOn(this)
+    Application(stage).apply {
+        start()
+    }
 }
