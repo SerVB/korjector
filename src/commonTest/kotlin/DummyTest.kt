@@ -1,9 +1,10 @@
+import com.soywiz.korge.tests.ViewsForTesting
 import kotlin.test.Test
 import kotlin.test.assertTrue
 
-class DummyTest {
+class DummyTest: ViewsForTesting() {
     @Test
-    fun `dummy test`() {
+    fun dummyTest() {
         assertTrue(true)
     }
 }
