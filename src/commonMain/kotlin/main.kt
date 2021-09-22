@@ -13,7 +13,6 @@ import com.soywiz.korge.view.centerOnStage
 import com.soywiz.korge.view.solidRect
 import com.soywiz.korim.color.Colors
 import com.soywiz.korim.color.RGBA
-import com.soywiz.korio.net.URL
 import com.soywiz.korma.geom.Anchor
 import com.soywiz.korma.geom.ScaleMode
 import org.jetbrains.projector.client.common.misc.ParamsProvider
@@ -57,6 +56,7 @@ private fun Stage.showSetupScreen(application: Application) {
         uiButton(text = "Connect") {
             onClick {
                 if (ParamsProvider.loadParamsFromUrl(urlInput.text)) {
+                    this@uiVerticalStack.removeFromParent()
                     application.start()
                 } else {
                     urlInput.textColor = Colors.RED
