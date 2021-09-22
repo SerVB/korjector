@@ -7,17 +7,17 @@ Korjector
 [![Building](https://github.com/SerVB/korjector/actions/workflows/build.yml/badge.svg)](https://github.com/SerVB/korjector/actions/workflows/build.yml)
 [![Testing](https://github.com/SerVB/korjector/actions/workflows/test.yml/badge.svg)](https://github.com/SerVB/korjector/actions/workflows/test.yml)
 
-<div style="text-align: center">
+<p align="center">
 <img align="middle" src="https://plugins.jetbrains.com/files/16015/134754/icon/pluginIcon.svg" alt="prj" width="30%">
 <img align="middle" src="https://svgshare.com/i/aRC.svg" alt="plus" width="20%" style="" >
 <img align="middle" src="https://korlibs.soywiz.com/i/logos/korge.svg" alt="KorGE" width="30%">
-</div>
+</p>
 
 **Korjector** is [KorGE](https://github.com/korlibs/korge) game engine-based multiplatform client for [Projector](https://github.com/JetBrains/projector-server)
 
 <h1 align="center"> place for visuals </h1>
 
-## Installation
+### Installation
 If you want to build a project from the source, you should run the following commands
 ```shell
 git clone https://github.com/SerVB/korjector.git
@@ -26,7 +26,7 @@ cd korjector
 ```
 also, you can download the latest release [here](https://github.com/SerVB/korjector/releases)
 
-## Running
+### Running
 
 ```shell
 ./gradlew runJvm  # the fastest way
