@@ -18,7 +18,7 @@ git clone https://github.com/SerVB/korjector.git
 cd korjector
 ./gradlew build
 ```
-also, you can download the latest release [here](https://github.com/SerVB/korjector/releases)
+also, you can download the latest release [here](https://github.com/SerVB/korjector/releases) or on [google drive](https://drive.google.com/drive/folders/1rGAI8BXe0JL4QsYpDq2KDfNuD5xycErK?usp=sharing)
 
 ### Running
 
@@ -28,6 +28,7 @@ Run a Projector server, for example, via Docker:
 docker pull registry.jetbrains.team/p/prj/containers/projector-idea-c
 docker run --rm -p 8887:8887 -it registry.jetbrains.team/p/prj/containers/projector-idea-c
 ```
+Worked with [this projector version](https://github.com/JetBrains/projector-server/commit/40ab2aaea512604caad87f9641d832037cd9afc7)
 
 After it, run this client.
 
