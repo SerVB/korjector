@@ -1,4 +1,5 @@
 # Korjector
+![korjector](https://i.imgur.com/rlUetNe.png)
 
 ![License](https://img.shields.io/github/license/jetbrains/projector-client)
 [![JetBrains incubator project](https://jb.gg/badges/incubator.svg)](https://confluence.jetbrains.com/display/ALL/JetBrains+on+GitHub)
