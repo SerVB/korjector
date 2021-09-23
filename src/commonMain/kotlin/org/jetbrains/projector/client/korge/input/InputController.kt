@@ -1,7 +1,6 @@
 package org.jetbrains.projector.client.korge.input
 
-import com.soywiz.korge.input.Input
-import com.soywiz.korge.input.onClick
+import com.soywiz.korge.input.*
 import mainStage
 import org.jetbrains.projector.client.common.misc.ParamsProvider
 import org.jetbrains.projector.client.common.misc.TimeStamp
@@ -45,22 +44,18 @@ class InputController(
   private var lastTouchX = 1
   private var lastTouchY = 1
 
-//  private fun handleMouseMoveEvent(event: Event) {  // todo
-//    require(event is MouseEvent)
-//
-//    val topWindow = windowManager.getTopWindow(event.clientX, event.clientY)
-//    if (mouseButtonsDown.isEmpty()) {
-//      topWindow?.let { fireMouseEvent(ClientMouseEvent.MouseEventType.MOVE, it.id, event) }
-//    }
-//    else {
-//      if (eventsInterceptor != null) {
-//        eventsInterceptor!!.onMouseMove(event.clientX, event.clientY)
-//      }
-//      else {
-//        topWindow?.let { fireMouseEvent(ClientMouseEvent.MouseEventType.DRAG, it.id, event) }
-//      }
-//    }
-//  }
+  private fun handleMouseMoveEvent(input: Input) {
+    val topWindow = windowManager.getTopWindow(input.mouse.y.toInt(), input.mouse.y.toInt())
+    if (mouseButtonsDown.isEmpty()) {
+      topWindow?.let { fireMouseEvent(ClientMouseEvent.MouseEventType.MOVE, it.id, input) }
+    } else {
+      if (eventsInterceptor != null) {
+        eventsInterceptor!!.onMouseMove(input.mouse.y.toInt(), input.mouse.y.toInt())
+      } else {
+        topWindow?.let { fireMouseEvent(ClientMouseEvent.MouseEventType.DRAG, it.id, input) }
+      }
+    }
+  }
 
 //  private fun handleTouchMoveEvent(event: Event) {  // todo
 //    require(event is TouchEvent)
@@ -82,19 +77,16 @@ class InputController(
 //    }
 //  }
 
-//  private fun handleMouseDownEvent(event: Event) {  // todo
-//    require(event is MouseEvent)
-//
-//    val topWindow = windowManager.getTopWindow(event.clientX, event.clientY) ?: return
-//    eventsInterceptor = topWindow.onMouseDown(event.clientX, event.clientY)
-//    if (eventsInterceptor == null) {
-//      fireMouseEvent(ClientMouseEvent.MouseEventType.DOWN, topWindow.id, event)
-//    }
-//    else {
-//      windowManager.bringToFront(topWindow)
-//    }
-//    mouseButtonsDown.add(event.button)
-//  }
+  private fun handleMouseDownEvent(input: Input) {
+    val topWindow = windowManager.getTopWindow(input.mouse.x.toInt(), input.mouse.y.toInt()) ?: return
+    eventsInterceptor = topWindow.onMouseDown(input.mouse.x.toInt(), input.mouse.y.toInt())
+    if (eventsInterceptor == null) {
+      fireMouseEvent(ClientMouseEvent.MouseEventType.DOWN, topWindow.id, input)
+    } else {
+      windowManager.bringToFront(topWindow)
+    }
+    mouseButtonsDown.add(LEFT_MOUSE_BUTTON_ID)  // todo
+  }
 
 //  private fun handleTouchStartEvent(event: Event) {  // todo
 //    require(event is TouchEvent)
@@ -123,19 +115,17 @@ class InputController(
 //    mouseButtonsDown.add(LEFT_MOUSE_BUTTON_ID)
 //  }
 
-//  private fun handleMouseUpEvent(event: Event) {  // todo
-//    require(event is MouseEvent)
-//    if (eventsInterceptor != null) {
-//      eventsInterceptor!!.onMouseUp(event.clientX, event.clientY)
-//      eventsInterceptor = null
-//    }
-//    else {
-//      windowManager.getTopWindow(event.clientX, event.clientY)?.id?.let {
-//        fireMouseEvent(ClientMouseEvent.MouseEventType.UP, it, event)
-//      }
-//    }
-//    mouseButtonsDown.remove(event.button)
-//  }
+  private fun handleMouseUpEvent(input: Input) {
+    if (eventsInterceptor != null) {
+      eventsInterceptor!!.onMouseUp(input.mouse.x.toInt(), input.mouse.y.toInt())
+      eventsInterceptor = null
+    } else {
+      windowManager.getTopWindow(input.mouse.x.toInt(), input.mouse.y.toInt())?.id?.let {
+        fireMouseEvent(ClientMouseEvent.MouseEventType.UP, it, input)
+      }
+    }
+    mouseButtonsDown.remove(LEFT_MOUSE_BUTTON_ID)  // todo
+  }
 
 //  private fun handleTouchEndEvent(event: Event) {  // todo
 //    require(event is TouchEvent)
@@ -222,9 +212,11 @@ class InputController(
 //  }  // todo
 
   fun addListeners() {
-    mainStage.onClick {
-      handleClickEvent(it.input)
-    }
+    mainStage
+      .onMove { handleMouseMoveEvent(it.input) }
+      .onDown { handleMouseDownEvent(it.input) }
+      .onUp { handleMouseUpEvent(it.input) }
+      .onClick { handleClickEvent(it.input) }
   }
 
   fun removeListeners() {
