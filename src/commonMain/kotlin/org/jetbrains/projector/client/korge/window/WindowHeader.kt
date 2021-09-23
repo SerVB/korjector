@@ -9,6 +9,9 @@ import com.soywiz.korim.bitmap.Bitmap
 import com.soywiz.korim.bitmap.Bitmap32
 import com.soywiz.korim.color.Colors
 import com.soywiz.korim.font.DefaultTtfFont
+import com.soywiz.korim.format.SVG
+import com.soywiz.korim.format.readBitmap
+import com.soywiz.korio.file.std.resourcesVfs
 import com.soywiz.korma.geom.IPoint
 import org.jetbrains.projector.client.common.canvas.KorgeCanvas
 import org.jetbrains.projector.client.common.canvas.PaintColor
@@ -27,10 +30,8 @@ class WindowHeader(parent: Container, var title: String? = null) : DragEventsInt
     lateinit var closeIconHover: Bitmap
 
     suspend fun initIcons() {
-//      closeIconNormal = resourcesVfs["close.svg"].readBitmap(SVG)  // todo
-//      closeIconHover = resourcesVfs["closeHover.svg"].readBitmap(SVG)  // todo
-      closeIconNormal = Bitmap32(16, 16, Colors.ORANGE)
-      closeIconHover = Bitmap32(16, 16, Colors.ORANGERED)
+      closeIconNormal = resourcesVfs["close.svg"].readBitmap(SVG)
+      closeIconHover = resourcesVfs["closeHover.svg"].readBitmap(SVG)
     }
   }
 

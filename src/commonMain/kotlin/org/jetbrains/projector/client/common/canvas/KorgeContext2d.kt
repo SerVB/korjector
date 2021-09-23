@@ -1,5 +1,6 @@
 package org.jetbrains.projector.client.common.canvas
 
+import com.soywiz.klogger.Logger
 import com.soywiz.korge.view.Image
 import com.soywiz.korim.color.Colors
 import com.soywiz.korim.font.Font
@@ -68,11 +69,11 @@ internal class KorgeContext2d(private val myCanvas: Image) : Context2d {
   }
 
   override fun drawImage(imageSource: ImageSource, x: Double, y: Double) {
-//    myContext2d.drawImage(imageSource.asPlatformImageSource().canvasElement, x, y)  // todo
+    myContext2d.drawImage(imageSource.asPlatformImageSource().canvasElement, x, y)
   }
 
   override fun drawImage(imageSource: ImageSource, x: Double, y: Double, dw: Double, dh: Double) {
-//    myContext2d.drawImage(imageSource.asPlatformImageSource().canvasElement, x, y, dw, dh)  // todo
+    myContext2d.drawImage(imageSource.asPlatformImageSource().canvasElement, x, y, dw, dh)
   }
 
   override fun drawImage(
@@ -86,7 +87,13 @@ internal class KorgeContext2d(private val myCanvas: Image) : Context2d {
     dw: Double,
     dh: Double,
   ) {
-//    myContext2d.drawImage(imageSource.asPlatformImageSource().canvasElement, sx, sy, sw, sh, dx, dy, dw, dh)  // todo
+    myContext2d.drawImage(
+      imageSource.asPlatformImageSource().canvasElement,
+      dx,
+      dy,
+      dw,
+      dh
+    )  // todo: we need to draw only area
   }
 
   override fun beginPath() {
@@ -305,6 +312,8 @@ internal class KorgeContext2d(private val myCanvas: Image) : Context2d {
   }
 
   companion object {
+    private val logger = Logger<org.jetbrains.projector.client.common.canvas.KorgeContext2d>()
+
     fun KorgeContext2d.moveBySegments(segments: List<PathSegment>) {
       segments.forEach {
         Do exhaustive when (it) {
