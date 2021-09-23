@@ -13,7 +13,7 @@ Korjector
 <img align="middle" src="https://korlibs.soywiz.com/i/logos/korge.svg" alt="KorGE" width="30%">
 </p>
 
-**Korjector** is [KorGE](https://github.com/korlibs/korge) game engine-based multiplatform client for [Projector](https://github.com/JetBrains/projector-server)
+**Korjector** is a [KorGE](https://github.com/korlibs/korge) game engine-based multiplatform client for [Projector](https://github.com/JetBrains/projector-server).
 
 <h1 align="center"> place for visuals </h1>
 
