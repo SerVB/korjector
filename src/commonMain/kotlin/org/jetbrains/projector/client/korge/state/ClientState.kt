@@ -16,7 +16,9 @@ import org.jetbrains.projector.client.korge.misc.ClientStats
 import org.jetbrains.projector.client.korge.misc.PingStatistics
 import org.jetbrains.projector.client.korge.protocol.SupportedTypesProvider
 import org.jetbrains.projector.client.korge.window.OnScreenMessenger
+import org.jetbrains.projector.client.korge.window.WindowDataEventsProcessor
 import org.jetbrains.projector.client.korge.window.WindowHeader
+import org.jetbrains.projector.client.korge.window.WindowManager
 import org.jetbrains.projector.common.misc.Do
 import org.jetbrains.projector.common.misc.toString
 import org.jetbrains.projector.common.protocol.MessageDecoder
@@ -317,19 +319,19 @@ sealed class ClientState {
 
     private val eventsToSend = mutableListOf<ClientEvent>(/*ClientSetKeymapEvent(nativeKeymap)*/)  // todo
 
-//    private val windowManager = WindowManager(stateMachine, imageCacher)  // todo
+    private val windowManager = WindowManager(stateMachine, imageCacher)
 
-//    private val windowDataEventsProcessor = WindowDataEventsProcessor(windowManager)  // todo
+    private val windowDataEventsProcessor = WindowDataEventsProcessor(windowManager)
 
     private var drawPendingEvents = mainStage.launch {
       // redraw windows in case any missing images are loaded now
       while (true) {
-//        windowDataEventsProcessor.drawPendingEvents()  // todo
+        windowDataEventsProcessor.drawPendingEvents()
         delay(ParamsProvider.REPAINT_INTERVAL_MS.toLong())
       }
     }
 
-    private val serverEventsProcessor = ServerEventsProcessor(/*windowDataEventsProcessor*/)
+    private val serverEventsProcessor = ServerEventsProcessor(windowDataEventsProcessor)
 
     private val messagingPolicy = (
             ParamsProvider.FLUSH_DELAY
@@ -517,7 +519,7 @@ sealed class ClientState {
 
             drawPendingEvents.cancel()
             pingStatistics.onClose()
-//            windowDataEventsProcessor.onClose()  // todo
+            windowDataEventsProcessor.onClose()
             // todo:
 //            inputController.removeListeners()
 //            windowSizeController.removeListener()
@@ -556,7 +558,7 @@ sealed class ClientState {
       val newConnection = createWebSocketConnection(webSocket.url, stateMachine)
         ?: object : WebSocketClient("${webSocket.url} (bad url)", emptyList(), false) {}
       return WaitingOpening(stateMachine, newConnection, windowSizeController, layers) {
-//        windowDataEventsProcessor.onClose()  // todo
+        windowDataEventsProcessor.onClose()
 //        markdownPanelManager.disposeAll()  // todo
 //        closeBlocker.removeListener()
 //        selectionBlocker.unblockSelection()

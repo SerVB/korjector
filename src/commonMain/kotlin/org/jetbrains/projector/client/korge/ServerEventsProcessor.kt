@@ -1,13 +1,15 @@
 package org.jetbrains.projector.client.korge
 
 import com.soywiz.klogger.Logger
+import org.jetbrains.projector.client.common.SingleRenderingSurfaceProcessor.Companion.shrinkByPaintEvents
 import org.jetbrains.projector.client.korge.misc.PingStatistics
 import org.jetbrains.projector.client.korge.state.ProjectorUI
 import org.jetbrains.projector.client.korge.window.OnScreenMessenger
+import org.jetbrains.projector.client.korge.window.WindowDataEventsProcessor
 import org.jetbrains.projector.common.misc.Do
 import org.jetbrains.projector.common.protocol.toClient.*
 
-class ServerEventsProcessor {
+class ServerEventsProcessor(private val windowDataEventsProcessor: WindowDataEventsProcessor) {
 
   @OptIn(ExperimentalStdlibApi::class)
   fun process(
@@ -19,17 +21,16 @@ class ServerEventsProcessor {
     commands.forEach { command ->
       Do exhaustive when (command) {
         is ServerWindowSetChangedEvent -> {
-//          windowDataEventsProcessor.process(command)  // todo
+          windowDataEventsProcessor.process(command)
 //          markdownPanelManager.updatePlacements()  // todo
         }
 
         is ServerDrawCommandsEvent -> drawCommandsEvents.add(command)
 
-        is ServerImageDataReplyEvent -> {
-        }//windowDataEventsProcessor.windowManager.imageCacher.putImageData(
-//          command.imageId,  // todo
-//          command.imageData,
-//        )
+        is ServerImageDataReplyEvent -> windowDataEventsProcessor.windowManager.imageCacher.putImageData(
+          command.imageId,
+          command.imageData,
+        )
 
         is ServerCaretInfoChangedEvent -> {
 //          typing.changeCaretInfo(command.data)  // todo
@@ -68,30 +69,29 @@ class ServerEventsProcessor {
 
     drawCommandsEvents.sortWith(drawingOrderComparator)
 
-    // todo
-//    drawCommandsEvents.forEach { event ->
-//      Do exhaustive when (val target = event.target) {
-//        is ServerDrawCommandsEvent.Target.Onscreen -> windowDataEventsProcessor.draw(target.windowId, event.drawEvents)
-//
-//        is ServerDrawCommandsEvent.Target.Offscreen -> {
-//          val offscreenProcessor = windowDataEventsProcessor.windowManager.imageCacher.getOffscreenProcessor(target)
-//
-//          val drawEvents = event.drawEvents.shrinkByPaintEvents()
-//
-//          val firstUnsuccessful = offscreenProcessor.processNew(drawEvents)
-//          if (firstUnsuccessful != null) {
-//            // todo: remember unsuccessful events and redraw pending ones as for windows
-//            logger.error { "Encountered unsuccessful drawing for an offscreen surface ${target.pVolatileImageId}, skipping" }
-//          }
-//
-//          windowDataEventsProcessor.drawPendingEvents()
-//        }
-//      }
-//    }
+    drawCommandsEvents.forEach { event ->
+      Do exhaustive when (val target = event.target) {
+        is ServerDrawCommandsEvent.Target.Onscreen -> windowDataEventsProcessor.draw(target.windowId, event.drawEvents)
+
+        is ServerDrawCommandsEvent.Target.Offscreen -> {
+          val offscreenProcessor = windowDataEventsProcessor.windowManager.imageCacher.getOffscreenProcessor(target)
+
+          val drawEvents = event.drawEvents.shrinkByPaintEvents()
+
+          val firstUnsuccessful = offscreenProcessor.processNew(drawEvents)
+          if (firstUnsuccessful != null) {
+            // todo: remember unsuccessful events and redraw pending ones as for windows
+            logger.error { "Encountered unsuccessful drawing for an offscreen surface ${target.pVolatileImageId}, skipping" }
+          }
+
+          windowDataEventsProcessor.drawPendingEvents()
+        }
+      }
+    }
   }
 
   fun onResized() {
-//    windowDataEventsProcessor.onResized()  // todo
+    windowDataEventsProcessor.onResized()
   }
 
   private fun handleServerClipboardChange(event: ServerClipboardEvent) {

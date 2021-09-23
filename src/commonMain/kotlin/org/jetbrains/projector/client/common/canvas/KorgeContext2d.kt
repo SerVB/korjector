@@ -165,7 +165,11 @@ internal class KorgeContext2d(private val myCanvas: Image) : Context2d {
   }
 
   override fun restore() {
-    myContext2d.restore()
+    try {
+      myContext2d.restore()
+    } catch (e: IndexOutOfBoundsException) {
+      // nothing to restore
+    }
   }
 
   override fun setFillStyle(color: PaintColor?) {
