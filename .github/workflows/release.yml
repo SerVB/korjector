@@ -1,0 +1,56 @@
+name: Upload Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  main:
+    name: Upload Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Setup Java
+        uses: actions/setup-java@v1
+        with:
+          java-version: 8
+      - name: Build project
+        run: ./gradlew packageJvmFatJar jsBrowserDistribution
+      - name: Make archives
+        run: |
+          zip korjector-all.zip  build/libs/korjector-all.jar
+          zip korjector-js.zip   build/distributions/*
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+          body: Release ${{ github.ref }}
+      - name: Tag name
+        id: tag_name
+        run: echo ::set-output name=SOURCE_TAG::${GITHUB_REF#refs/tags/}
+      - name: Upload Release Asset (JVM)
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: korjector-all.zip
+          asset_name: korjector-JVM-${{ steps.tag_name.outputs.SOURCE_TAG }}.zip
+          asset_content_type: application/zip
+      - name: Upload Release Asset (JS)
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: korjector-js.zip
+          asset_name: korjector-JS-${{ steps.tag_name.outputs.SOURCE_TAG }}.zip
+          asset_content_type: application/zip
