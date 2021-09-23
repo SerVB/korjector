@@ -18,13 +18,17 @@ import com.soywiz.korma.geom.ScaleMode
 import org.jetbrains.projector.client.common.misc.ParamsProvider
 import org.jetbrains.projector.client.korge.Application
 
+lateinit var mainStage: Stage
+    private set
+
 suspend fun main() = Korge(
     width = 800, height = 600,
     title = "korjector",
 ) {
-    Logger.defaultLevel = Logger.Level.INFO
+    Logger.defaultLevel = Logger.Level.DEBUG
+    mainStage = stage
 
-    val application = Application(stage)
+    val application = Application()
     showSetupScreen(application)
 }
 

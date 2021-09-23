@@ -1,15 +1,14 @@
 package org.jetbrains.projector.client.korge
 
-import com.soywiz.korge.view.Stage
 import org.jetbrains.projector.client.common.misc.ParamsProvider
 import org.jetbrains.projector.client.korge.state.ClientAction
 import org.jetbrains.projector.client.korge.state.ClientStateMachine
 import kotlin.random.Random
 
-class Application(private val stage: Stage) {
+class Application {
 
-    private val stateMachine = ClientStateMachine(stage)
-    private val windowSizeController = WindowSizeController(stage, stateMachine)
+    private val stateMachine = ClientStateMachine()
+    private val windowSizeController = WindowSizeController(stateMachine)
 
     fun start() {
         val scheme = when (ParamsProvider.ENABLE_WSS) {
@@ -28,7 +27,6 @@ class Application(private val stage: Stage) {
 
         stateMachine.fire(
             ClientAction.Start(
-                stage = stage,
                 stateMachine = stateMachine,
                 url = url,
                 windowSizeController = windowSizeController

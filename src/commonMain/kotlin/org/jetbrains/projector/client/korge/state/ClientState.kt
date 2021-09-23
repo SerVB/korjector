@@ -1,22 +1,32 @@
 package org.jetbrains.projector.client.korge.state
 
 import com.soywiz.klogger.Logger
-import com.soywiz.korge.view.Stage
 import com.soywiz.korio.net.ws.WebSocketClient
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import mainStage
+import org.jetbrains.projector.client.common.misc.ImageCacher
 import org.jetbrains.projector.client.common.misc.ParamsProvider
 import org.jetbrains.projector.client.common.misc.TimeStamp
+import org.jetbrains.projector.client.common.protocol.KotlinxJsonToClientHandshakeDecoder
 import org.jetbrains.projector.client.common.protocol.KotlinxJsonToServerHandshakeEncoder
+import org.jetbrains.projector.client.korge.ServerEventsProcessor
 import org.jetbrains.projector.client.korge.WindowSizeController
 import org.jetbrains.projector.client.korge.misc.ClientStats
+import org.jetbrains.projector.client.korge.misc.PingStatistics
 import org.jetbrains.projector.client.korge.protocol.SupportedTypesProvider
 import org.jetbrains.projector.client.korge.window.OnScreenMessenger
 import org.jetbrains.projector.client.korge.window.WindowHeader
 import org.jetbrains.projector.common.misc.Do
+import org.jetbrains.projector.common.misc.toString
 import org.jetbrains.projector.common.protocol.MessageDecoder
 import org.jetbrains.projector.common.protocol.MessageEncoder
 import org.jetbrains.projector.common.protocol.compress.MessageCompressor
 import org.jetbrains.projector.common.protocol.compress.MessageDecompressor
 import org.jetbrains.projector.common.protocol.handshake.*
+import org.jetbrains.projector.common.protocol.toClient.ServerDrawCommandsEvent
+import org.jetbrains.projector.common.protocol.toClient.ToClientMessageDecoder
+import org.jetbrains.projector.common.protocol.toServer.*
 import kotlin.math.roundToInt
 
 sealed class ClientState {
@@ -32,9 +42,8 @@ sealed class ClientState {
 
   object UninitializedPage : ClientState() {
 
-    private suspend fun configureWebPage(stage: Stage, url: String): AppLayers {
+    private suspend fun configureWebPage(url: String): AppLayers {
       WindowHeader.initIcons()
-      OnScreenMessenger.mainStage = stage
 
 //      document.body!!.apply {
 //        style.apply {
@@ -94,7 +103,7 @@ sealed class ClientState {
 
     override suspend fun consume(action: ClientAction) = when (action) {
       is ClientAction.Start -> {
-        val layers = configureWebPage(action.stage, action.url)
+        val layers = configureWebPage(action.url)
 
         val webSocket = createWebSocketConnection(action.url, action.stateMachine)
           ?: object : WebSocketClient("${action.url} (bad url)", emptyList(), false) {}
@@ -152,15 +161,14 @@ sealed class ClientState {
 
         OnScreenMessenger.showText("Connection is opened", "Handshake is sent...", canReload = false)
 
-        Disconnected
-//        WaitingHandshakeReply( // todo
-//          stateMachine = stateMachine,
-//          webSocket = webSocket,
-//          windowSizeController = windowSizeController,
-//          openingTimeStamp = action.openingTimeStamp,
-//          onHandshakeFinish = onHandshakeFinish,
-//          layers = layers,
-//        )
+        WaitingHandshakeReply(
+          stateMachine = stateMachine,
+          webSocket = webSocket,
+          windowSizeController = windowSizeController,
+          openingTimeStamp = action.openingTimeStamp,
+          onHandshakeFinish = onHandshakeFinish,
+          layers = layers,
+        )
       }
 
       is ClientAction.WebSocket.Close -> {
@@ -174,39 +182,40 @@ sealed class ClientState {
     }
   }
 
-//  private class WaitingHandshakeReply(
-//    private val stateMachine: ClientStateMachine,
-//    private val webSocket: WebSocket,
-//    private val windowSizeController: WindowSizeController,
-//    private val openingTimeStamp: Int,
-//    private val onHandshakeFinish: () -> Unit,
-//    private val layers: AppLayers,
-//  ) : ClientState() {
-//
-//    override fun consume(action: ClientAction) = when (action) {
-//      is ClientAction.WebSocket.Message -> {
-//        val command = KotlinxJsonToClientHandshakeDecoder.decode(action.message)
-//
-//        Do exhaustive when (command) {
-//          is ToClientHandshakeFailureEvent -> {
-//            OnScreenMessenger.showText("Handshake failure", "Reason: ${command.reason}", canReload = true)
-//            webSocket.close()
-//            onHandshakeFinish()
-//
-//            Disconnected
-//          }
-//
-//          is ToClientHandshakeSuccessEvent -> {
-//            command.colors?.let { ProjectorUI.setColors(it) }
-//
-//            FontFaceAppender.removeAppendedFonts()
-//
-//            OnScreenMessenger.showText(
-//              "Loading fonts...",
-//              "0 of ${command.fontDataHolders.size} font(s) loaded",
-//              canReload = false
-//            )
-//
+  private class WaitingHandshakeReply(
+    private val stateMachine: ClientStateMachine,
+    private val webSocket: WebSocketClient,
+    private val windowSizeController: WindowSizeController,
+    private val openingTimeStamp: Int,
+    private val onHandshakeFinish: () -> Unit,
+    private val layers: AppLayers,
+  ) : ClientState() {
+
+    override suspend fun consume(action: ClientAction) = when (action) {
+      is ClientAction.WebSocket.Message -> {
+        val command = KotlinxJsonToClientHandshakeDecoder.decode(action.message)
+
+        Do exhaustive when (command) {
+          is ToClientHandshakeFailureEvent -> {
+            OnScreenMessenger.showText("Handshake failure", "Reason: ${command.reason}", canReload = true)
+            webSocket.close()
+            onHandshakeFinish()
+
+            Disconnected
+          }
+
+          is ToClientHandshakeSuccessEvent -> {
+            command.colors?.let { ProjectorUI.setColors(it) }
+
+//            FontFaceAppender.removeAppendedFonts()  // todo
+
+            OnScreenMessenger.showText(
+              "Loading fonts...",
+              "0 of ${command.fontDataHolders.size} font(s) loaded",
+              canReload = false
+            )
+
+            // todo
 //            command.fontDataHolders.forEach { fontDataHolder ->
 //              FontFaceAppender.appendFontFaceToPage(fontDataHolder.fontId, fontDataHolder.fontData) { loadedFontCount ->
 //                if (loadedFontCount == command.fontDataHolders.size) {
@@ -224,118 +233,121 @@ sealed class ClientState {
 //                }
 //              }
 //            }
-//
-//            LoadingFonts(
-//              stateMachine = stateMachine,
-//              webSocket = webSocket,
-//              windowSizeController = windowSizeController,
-//              openingTimeStamp = openingTimeStamp,
-//              encoder = SupportedTypesProvider.supportedToServerEncoders.first { it.protocolType == command.toServerProtocol },
-//              decoder = SupportedTypesProvider.supportedToClientDecoders.first { it.protocolType == command.toClientProtocol },
-//              decompressor = SupportedTypesProvider.supportedToClientDecompressors.first { it.compressionType == command.toClientCompression },
-//              compressor = SupportedTypesProvider.supportedToServerCompressors.first { it.compressionType == command.toServerCompression },
-//              onHandshakeFinish = onHandshakeFinish,
-//              layers = layers,
-//            )
-//          }
-//        }
-//      }
-//
-//      is ClientAction.WebSocket.Close -> {
-//        showDisconnectedMessage(webSocket.url, action)
-//        onHandshakeFinish()
-//
-//        Disconnected
-//      }
-//
-//      else -> super.consume(action)
-//    }
-//  }
-//
-//  private class LoadingFonts(
-//    private val stateMachine: ClientStateMachine,
-//    private val webSocket: WebSocket,
-//    private val windowSizeController: WindowSizeController,
-//    private val openingTimeStamp: Int,
-//    private val encoder: ToServerMessageEncoder,
-//    private val decoder: ToClientMessageDecoder,
-//    private val decompressor: MessageDecompressor<ByteArray>,
-//    private val compressor: MessageCompressor<String>,
-//    private val onHandshakeFinish: () -> Unit,
-//    private val layers: AppLayers,
-//  ) : ClientState() {
-//
-//    override fun consume(action: ClientAction) = when (action) {
-//      is ClientAction.LoadAllFonts -> {
-//        logger.debug { "All fonts are loaded. Ready to draw!" }
-//
-//        webSocket.send("Unused string meaning fonts loading is done")  // todo: change this string
-//        onHandshakeFinish()
-//
-//        ReadyToDraw(
-//          stateMachine = stateMachine,
-//          webSocket = webSocket,
-//          windowSizeController = windowSizeController,
-//          openingTimeStamp = openingTimeStamp,
-//          encoder = encoder,
-//          decoder = decoder,
-//          decompressor = decompressor,
-//          compressor = compressor,
-//          layers = layers,
-//          ImageCacher()
-//        )
-//      }
-//
-//      else -> super.consume(action)
-//    }
-//  }
-//
-//  private class ReadyToDraw(
-//    private val stateMachine: ClientStateMachine,
-//    private val webSocket: WebSocket,
-//    private val windowSizeController: WindowSizeController,
-//    openingTimeStamp: Int,
-//    private val encoder: ToServerMessageEncoder,
-//    private val decoder: ToClientMessageDecoder,
-//    private val decompressor: MessageDecompressor<ByteArray>,
-//    private val compressor: MessageCompressor<String>,
-//    private val layers: AppLayers,
-//    private val imageCacher: ImageCacher
-//  ) : ClientState() {
-//
-//    private val eventsToSend = mutableListOf<ClientEvent>(ClientSetKeymapEvent(nativeKeymap))
-//
-//    private val windowManager = WindowManager(stateMachine, imageCacher)
-//
-//    private val windowDataEventsProcessor = WindowDataEventsProcessor(windowManager)
-//
-//    private var drawPendingEvents = GlobalScope.launch {
-//      // redraw windows in case any missing images are loaded now
-//      while (true) {
-//        windowDataEventsProcessor.drawPendingEvents()
-//        delay(ParamsProvider.REPAINT_INTERVAL_MS.toLong())
-//      }
-//    }
-//
-//    private val serverEventsProcessor = ServerEventsProcessor(windowDataEventsProcessor)
-//
-//    private val messagingPolicy = (
-//      ParamsProvider.FLUSH_DELAY
-//        ?.let {
-//          MessagingPolicy.Buffered(
-//            timeout = it,
-//            isFlushNeeded = { eventsToSend.isNotEmpty() },
-//            flush = { stateMachine.fire(ClientAction.Flush) }
-//          )
-//        }
-//      ?: MessagingPolicy.Unbuffered(
-//        isFlushNeeded = { eventsToSend.isNotEmpty() },
-//        flush = { stateMachine.fire(ClientAction.Flush) }
-//      )
-//                                  ).apply {
-//        onHandshakeFinished()
-//      }
-//
+            logger.info { "${command.fontDataHolders.size} font(s) loaded" }
+            OnScreenMessenger.hide()
+            stateMachine.fire(ClientAction.LoadAllFonts)
+
+            LoadingFonts(
+              stateMachine = stateMachine,
+              webSocket = webSocket,
+              windowSizeController = windowSizeController,
+              openingTimeStamp = openingTimeStamp,
+              encoder = SupportedTypesProvider.supportedToServerEncoders.first { it.protocolType == command.toServerProtocol },
+              decoder = SupportedTypesProvider.supportedToClientDecoders.first { it.protocolType == command.toClientProtocol },
+              decompressor = SupportedTypesProvider.supportedToClientDecompressors.first { it.compressionType == command.toClientCompression },
+              compressor = SupportedTypesProvider.supportedToServerCompressors.first { it.compressionType == command.toServerCompression },
+              onHandshakeFinish = onHandshakeFinish,
+              layers = layers,
+            )
+          }
+        }
+      }
+
+      is ClientAction.WebSocket.Close -> {
+        showDisconnectedMessage(webSocket.url, action)
+        onHandshakeFinish()
+
+        Disconnected
+      }
+
+      else -> super.consume(action)
+    }
+  }
+
+  private class LoadingFonts(
+    private val stateMachine: ClientStateMachine,
+    private val webSocket: WebSocketClient,
+    private val windowSizeController: WindowSizeController,
+    private val openingTimeStamp: Int,
+    private val encoder: ToServerMessageEncoder,
+    private val decoder: ToClientMessageDecoder,
+    private val decompressor: MessageDecompressor<ByteArray>,
+    private val compressor: MessageCompressor<String>,
+    private val onHandshakeFinish: () -> Unit,
+    private val layers: AppLayers,
+  ) : ClientState() {
+
+    override suspend fun consume(action: ClientAction) = when (action) {
+      is ClientAction.LoadAllFonts -> {
+        logger.debug { "All fonts are loaded. Ready to draw!" }
+
+        webSocket.send("Unused string meaning fonts loading is done")  // todo: change this string
+        onHandshakeFinish()
+
+        ReadyToDraw(
+          stateMachine = stateMachine,
+          webSocket = webSocket,
+          windowSizeController = windowSizeController,
+          openingTimeStamp = openingTimeStamp,
+          encoder = encoder,
+          decoder = decoder,
+          decompressor = decompressor,
+          compressor = compressor,
+          layers = layers,
+          ImageCacher()
+        )
+      }
+
+      else -> super.consume(action)
+    }
+  }
+
+  private class ReadyToDraw(
+    private val stateMachine: ClientStateMachine,
+    private val webSocket: WebSocketClient,
+    private val windowSizeController: WindowSizeController,
+    openingTimeStamp: Int,
+    private val encoder: ToServerMessageEncoder,
+    private val decoder: ToClientMessageDecoder,
+    private val decompressor: MessageDecompressor<ByteArray>,
+    private val compressor: MessageCompressor<String>,
+    private val layers: AppLayers,
+    private val imageCacher: ImageCacher,
+  ) : ClientState() {
+
+    private val eventsToSend = mutableListOf<ClientEvent>(/*ClientSetKeymapEvent(nativeKeymap)*/)  // todo
+
+//    private val windowManager = WindowManager(stateMachine, imageCacher)  // todo
+
+//    private val windowDataEventsProcessor = WindowDataEventsProcessor(windowManager)  // todo
+
+    private var drawPendingEvents = mainStage.launch {
+      // redraw windows in case any missing images are loaded now
+      while (true) {
+//        windowDataEventsProcessor.drawPendingEvents()  // todo
+        delay(ParamsProvider.REPAINT_INTERVAL_MS.toLong())
+      }
+    }
+
+    private val serverEventsProcessor = ServerEventsProcessor(/*windowDataEventsProcessor*/)
+
+    private val messagingPolicy = (
+            ParamsProvider.FLUSH_DELAY
+              ?.let {
+                MessagingPolicy.Buffered(
+                  timeout = it,
+                  isFlushNeeded = { eventsToSend.isNotEmpty() },
+                  flush = { stateMachine.fire(ClientAction.Flush) }
+                )
+              }
+              ?: MessagingPolicy.Unbuffered(
+                isFlushNeeded = { eventsToSend.isNotEmpty() },
+                flush = { stateMachine.fire(ClientAction.Flush) }
+              )
+            ).apply {
+        onHandshakeFinished()
+      }
+
 //    private val sentReceivedBadgeShower: SentReceivedBadgeShower = if (ParamsProvider.SHOW_SENT_RECEIVED) {
 //      DivSentReceivedBadgeShower()
 //    }
@@ -343,17 +355,17 @@ sealed class ClientState {
 //      NoSentReceivedBadgeShower
 //    }.apply {
 //      onHandshakeFinished()
-//    }
-//
-//    private val pingStatistics = PingStatistics(
-//      openingTimeStamp = openingTimeStamp,
-//      requestPing = {
-//        stateMachine.fire(ClientAction.AddEvent(ClientRequestPingEvent(clientTimeStamp = TimeStamp.current.toInt() - openingTimeStamp)))
-//      }
-//    ).apply {
-//      onHandshakeFinished()
-//    }
-//
+//    }  // todo
+
+    private val pingStatistics = PingStatistics(
+      openingTimeStamp = openingTimeStamp,
+      requestPing = {
+        stateMachine.fire(ClientAction.AddEvent(ClientRequestPingEvent(clientTimeStamp = TimeStamp.current.toInt() - openingTimeStamp)))
+      }
+    ).apply {
+      onHandshakeFinished()
+    }
+
 //    private val inputController = InputController(
 //      openingTimeStamp = openingTimeStamp,
 //      stateMachine = stateMachine,
@@ -361,148 +373,152 @@ sealed class ClientState {
 //      windowPositionByIdGetter = windowManager::get,
 //    ).apply {
 //      addListeners()
-//    }
-//
+//    }  // todo
+
 //    private val typing = when (ParamsProvider.SPECULATIVE_TYPING) {
 //      false -> Typing.NotSpeculativeTyping
 //      true -> Typing.SpeculativeTyping(windowManager::getWindowCanvas)
-//    }
-//
+//    }  // todo
+
 //    private val markdownPanelManager = MarkdownPanelManager(windowManager::getWindowZIndex) { link ->
 //      stateMachine.fire(ClientAction.AddEvent(ClientOpenLinkEvent(link)))
-//    }
-//
+//    }  // todo
+
 //    private val closeBlocker = when (ParamsProvider.BLOCK_CLOSING) {
 //      true -> CloseBlockerImpl(window)
 //      false -> NopCloseBlocker
 //    }.apply {
 //      setListener()
-//    }
-//
+//    }  // todo
+
 //    private val selectionBlocker = SelectionBlocker(window).apply {
 //      blockSelection()
-//    }
-//
+//    }  // todo
+
 //    private val connectionWatcher = ConnectionWatcher { stateMachine.fire(ClientAction.WebSocket.NoReplies(it)) }.apply {
 //      setWatcher()
-//    }
-//
-//    init {
-//      windowSizeController.addListener()
-//    }
-//
-//    @OptIn(ExperimentalStdlibApi::class)
-//    override fun consume(action: ClientAction) = when (action) {
-//      is ClientAction.WebSocket.Message -> {
-//        connectionWatcher.resetTime()
-//
-//        val receiveTimeStamp = TimeStamp.current
-//        val decompressed = decompressor.decompress(action.message)
-//        val decompressTimeStamp = TimeStamp.current
-//        val commands = decoder.decode(decompressed)
-//        val decodeTimestamp = TimeStamp.current
-//        serverEventsProcessor.process(commands, pingStatistics, typing, markdownPanelManager, inputController)
-//        val drawTimestamp = TimeStamp.current
-//
-//        imageCacher.collectGarbage()
-//
-//        eventsToSend.addAll(imageCacher.extractImagesToRequest())
-//
-//        messagingPolicy.onToClientMessage()
-//        sentReceivedBadgeShower.onToClientMessage()
-//
-//        val drawEventCount = commands
-//          .filterIsInstance<ServerDrawCommandsEvent>()
-//          .map { it.drawEvents.size }
-//          .sum()
-//
-//        val decompressingTimeMs = decompressTimeStamp - receiveTimeStamp
-//        val decodingTimeMs = decodeTimestamp - decompressTimeStamp
-//        val drawingTimeMs = drawTimestamp - decodeTimestamp
-//
-//        ClientStats.toClientMessageSizeAverage.add(action.message.size.toLong())
-//        ClientStats.toClientMessageSizeRate.add(action.message.size.toLong())
-//
-//        ClientStats.toClientCompressionRatioAverage.add(action.message.size.toDouble() / decompressed.size)
-//
-//        ClientStats.drawEventCountAverage.add(drawEventCount.toLong())
-//        ClientStats.drawEventCountRate.add(drawEventCount.toLong())
-//
-//        ClientStats.decompressingTimeMsAverage.add(decompressingTimeMs)
-//        ClientStats.decompressingTimeMsRate.add(decompressingTimeMs)
-//
-//        ClientStats.decodingTimeMsAverage.add(decodingTimeMs)
-//        ClientStats.decodingTimeMsRate.add(decodingTimeMs)
-//
-//        ClientStats.drawingTimeMsAverage.add(drawingTimeMs)
-//        ClientStats.drawingTimeMsRate.add(drawingTimeMs)
-//
-//        val processTimestamp = TimeStamp.current
-//
-//        val otherProcessingTimeMs = processTimestamp - drawTimestamp
-//        val totalTimeMs = processTimestamp - receiveTimeStamp
-//
-//        ClientStats.otherProcessingTimeMsAverage.add(otherProcessingTimeMs)
-//        ClientStats.otherProcessingTimeMsRate.add(otherProcessingTimeMs)
-//
-//        ClientStats.totalTimeMsAverage.add(totalTimeMs)
-//        ClientStats.totalTimeMsRate.add(totalTimeMs)
-//
-//        if (ParamsProvider.SHOW_PROCESSING_TIME) {
-//          fun roundToTwoDecimals(number: Double) = number.asDynamic().toFixed(2)
-//
-//          if (drawEventCount > 0) {
-//            logger.debug {
-//              "Timestamp is ${roundToTwoDecimals(processTimestamp)}:\t" +
-//              "draw events count: $drawEventCount,\t" +
-//              "decompressing: ${roundToTwoDecimals(decompressingTimeMs)} ms,\t\t" +
-//              "decoding: ${roundToTwoDecimals(decodingTimeMs)} ms,\t\t" +
-//              "drawing: ${roundToTwoDecimals(drawingTimeMs)} ms,\t\t" +
-//              "other processing: ${roundToTwoDecimals(otherProcessingTimeMs)} ms,\t\t" +
-//              "total: ${roundToTwoDecimals(totalTimeMs)} ms"
-//            }
-//          }
-//        }
-//
-//        this
-//      }
-//
-//      is ClientAction.AddEvent -> {
-//        val event = action.event
-//
-//        if (event is ClientKeyPressEvent) {
+//    }  // todo
+
+    init {
+//      windowSizeController.addListener()  // todo
+    }
+
+    @OptIn(ExperimentalStdlibApi::class)
+    override suspend fun consume(action: ClientAction) = when (action) {
+      is ClientAction.WebSocket.Message -> {
+//        connectionWatcher.resetTime()  // todo
+
+        val receiveTimeStamp = TimeStamp.current
+        val decompressed = decompressor.decompress(action.message)
+        val decompressTimeStamp = TimeStamp.current
+        val commands = decoder.decode(decompressed)
+        val decodeTimestamp = TimeStamp.current
+        serverEventsProcessor.process(
+          commands,
+          pingStatistics/*, typing, markdownPanelManager, inputController*/
+        )  // todo
+        val drawTimestamp = TimeStamp.current
+
+        imageCacher.collectGarbage()
+
+        eventsToSend.addAll(imageCacher.extractImagesToRequest())
+
+        messagingPolicy.onToClientMessage()
+//        sentReceivedBadgeShower.onToClientMessage()  // todo
+
+        val drawEventCount = commands
+          .filterIsInstance<ServerDrawCommandsEvent>()
+          .map { it.drawEvents.size }
+          .sum()
+
+        val decompressingTimeMs = decompressTimeStamp - receiveTimeStamp
+        val decodingTimeMs = decodeTimestamp - decompressTimeStamp
+        val drawingTimeMs = drawTimestamp - decodeTimestamp
+
+        ClientStats.toClientMessageSizeAverage.add(action.message.size.toLong())
+        ClientStats.toClientMessageSizeRate.add(action.message.size.toLong())
+
+        ClientStats.toClientCompressionRatioAverage.add(action.message.size.toDouble() / decompressed.size)
+
+        ClientStats.drawEventCountAverage.add(drawEventCount.toLong())
+        ClientStats.drawEventCountRate.add(drawEventCount.toLong())
+
+        ClientStats.decompressingTimeMsAverage.add(decompressingTimeMs)
+        ClientStats.decompressingTimeMsRate.add(decompressingTimeMs)
+
+        ClientStats.decodingTimeMsAverage.add(decodingTimeMs)
+        ClientStats.decodingTimeMsRate.add(decodingTimeMs)
+
+        ClientStats.drawingTimeMsAverage.add(drawingTimeMs)
+        ClientStats.drawingTimeMsRate.add(drawingTimeMs)
+
+        val processTimestamp = TimeStamp.current
+
+        val otherProcessingTimeMs = processTimestamp - drawTimestamp
+        val totalTimeMs = processTimestamp - receiveTimeStamp
+
+        ClientStats.otherProcessingTimeMsAverage.add(otherProcessingTimeMs)
+        ClientStats.otherProcessingTimeMsRate.add(otherProcessingTimeMs)
+
+        ClientStats.totalTimeMsAverage.add(totalTimeMs)
+        ClientStats.totalTimeMsRate.add(totalTimeMs)
+
+        if (ParamsProvider.SHOW_PROCESSING_TIME) {
+          fun roundToTwoDecimals(number: Double) = number.toString(2)
+
+          if (drawEventCount > 0) {
+            logger.debug {
+              "Timestamp is ${roundToTwoDecimals(processTimestamp)}:\t" +
+                      "draw events count: $drawEventCount,\t" +
+                      "decompressing: ${roundToTwoDecimals(decompressingTimeMs)} ms,\t\t" +
+                      "decoding: ${roundToTwoDecimals(decodingTimeMs)} ms,\t\t" +
+                      "drawing: ${roundToTwoDecimals(drawingTimeMs)} ms,\t\t" +
+                      "other processing: ${roundToTwoDecimals(otherProcessingTimeMs)} ms,\t\t" +
+                      "total: ${roundToTwoDecimals(totalTimeMs)} ms"
+            }
+          }
+        }
+
+        this
+      }
+
+      is ClientAction.AddEvent -> {
+        val event = action.event
+
+//        if (event is ClientKeyPressEvent) {  // todo
 //          typing.addEventChar(event)
 //        }
-//
-//        eventsToSend.add(event)
-//        messagingPolicy.onAddEvent()
-//
-//        this
-//      }
-//
-//      is ClientAction.Flush -> {
-//        val message = encoder.encode(eventsToSend).also { eventsToSend.clear() }
-//        webSocket.send(compressor.compress(message))
-//
-//        sentReceivedBadgeShower.onToServerMessage()
-//
-//        this
-//      }
-//
-//      is ClientAction.WindowResize -> {
-//        serverEventsProcessor.onResized()
-//
-//        this
-//      }
-//
-//      is ClientAction.WebSocket.Close -> {
-//        Do exhaustive when (action.endedNormally) {
-//          true -> {
-//            logger.info { "Connection is closed..." }
-//
-//            drawPendingEvents.cancel()
-//            pingStatistics.onClose()
-//            windowDataEventsProcessor.onClose()
+
+        eventsToSend.add(event)
+        messagingPolicy.onAddEvent()
+
+        this
+      }
+
+      is ClientAction.Flush -> {
+        val message = encoder.encode(eventsToSend).also { eventsToSend.clear() }
+        webSocket.send(compressor.compress(message))
+
+//        sentReceivedBadgeShower.onToServerMessage()  // todo
+
+        this
+      }
+
+      is ClientAction.WindowResize -> {
+        serverEventsProcessor.onResized()
+
+        this
+      }
+
+      is ClientAction.WebSocket.Close -> {
+        Do exhaustive when (action.endedNormally) {
+          true -> {
+            logger.info { "Connection is closed..." }
+
+            drawPendingEvents.cancel()
+            pingStatistics.onClose()
+//            windowDataEventsProcessor.onClose()  // todo
+            // todo:
 //            inputController.removeListeners()
 //            windowSizeController.removeListener()
 //            typing.dispose()
@@ -510,43 +526,44 @@ sealed class ClientState {
 //            closeBlocker.removeListener()
 //            selectionBlocker.unblockSelection()
 //            connectionWatcher.removeWatcher()
-//
-//            showDisconnectedMessage(webSocket.url, action)
-//            Disconnected
-//          }
-//
-//          false -> reloadConnection("Connection is closed unexpectedly, retrying the connection...")
-//        }
-//      }
-//
-//      is ClientAction.WebSocket.NoReplies ->
-//        reloadConnection("No messages from server for ${action.elapsedTimeMs} ms, retrying the connection...")
-//
-//      else -> super.consume(action)
-//    }
-//
-//    private fun reloadConnection(messageText: String): ClientState {
-//      logger.info { messageText }
-//
-//      drawPendingEvents.cancel()
-//      pingStatistics.onClose()
-//      inputController.removeListeners()
-//      windowSizeController.removeListener()
-//      typing.dispose()
-//      connectionWatcher.removeWatcher()
-//
-//      layers.reconnectionMessageUpdater(messageText)
-//
-//      val newConnection = createWebSocketConnection(webSocket.url, stateMachine)
-//      return WaitingOpening(stateMachine, newConnection, windowSizeController, layers) {
-//        windowDataEventsProcessor.onClose()
-//        markdownPanelManager.disposeAll()
+
+            showDisconnectedMessage(webSocket.url, action)
+            Disconnected
+          }
+
+          false -> reloadConnection("Connection is closed unexpectedly, retrying the connection...")
+        }
+      }
+
+      is ClientAction.WebSocket.NoReplies ->
+        reloadConnection("No messages from server for ${action.elapsedTimeMs} ms, retrying the connection...")
+
+      else -> super.consume(action)
+    }
+
+    private suspend fun reloadConnection(messageText: String): ClientState {
+      logger.info { messageText }
+
+      drawPendingEvents.cancel()
+      pingStatistics.onClose()
+//      inputController.removeListeners()  // todo
+//      windowSizeController.removeListener()  // todo
+//      typing.dispose()  // todo
+//      connectionWatcher.removeWatcher()  // todo
+
+      layers.reconnectionMessageUpdater(messageText)
+
+      val newConnection = createWebSocketConnection(webSocket.url, stateMachine)
+        ?: object : WebSocketClient("${webSocket.url} (bad url)", emptyList(), false) {}
+      return WaitingOpening(stateMachine, newConnection, windowSizeController, layers) {
+//        windowDataEventsProcessor.onClose()  // todo
+//        markdownPanelManager.disposeAll()  // todo
 //        closeBlocker.removeListener()
 //        selectionBlocker.unblockSelection()
-//        layers.reconnectionMessageUpdater(null)
-//      }
-//    }
-//  }
+        layers.reconnectionMessageUpdater(null)
+      }
+    }
+  }
 
   object Disconnected : ClientState()
 

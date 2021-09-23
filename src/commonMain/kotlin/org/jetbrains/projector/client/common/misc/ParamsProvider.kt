@@ -25,7 +25,7 @@ object ParamsProvider {
   val BACKGROUND_COLOR: String = "#282"
   val PING_AVERAGE_COUNT: Int? = null
   val PING_INTERVAL: Int = 1000
-  val SHOW_PROCESSING_TIME: Boolean = false
+  val SHOW_PROCESSING_TIME: Boolean = true
   val REPAINT_AREA: RepaintAreaSetting = RepaintAreaSetting.Disabled
   val SPECULATIVE_TYPING: Boolean = false
   var ENABLE_WSS: Boolean = false

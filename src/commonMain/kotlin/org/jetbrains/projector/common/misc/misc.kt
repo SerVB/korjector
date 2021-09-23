@@ -1,6 +1,6 @@
 package org.jetbrains.projector.common.misc
 
-import com.soywiz.korio.lang.format
+import kotlin.math.roundToLong
 
 object Do { // https://youtrack.jetbrains.com/issue/KT-12380
 
@@ -8,4 +8,4 @@ object Do { // https://youtrack.jetbrains.com/issue/KT-12380
 }
 
 // https://youtrack.jetbrains.com/issue/KT-9374
-fun Double.toString(fractionDigitsToLeave: Int): String = "%.${fractionDigitsToLeave}f".format(this)
+fun Double.toString(fractionDigitsToLeave: Int): String = "${(this * 100).roundToLong() / 100.0}"

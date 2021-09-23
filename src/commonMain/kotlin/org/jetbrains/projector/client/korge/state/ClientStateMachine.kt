@@ -1,24 +1,24 @@
 package org.jetbrains.projector.client.korge.state
 
 import com.soywiz.klogger.Logger
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
+import mainStage
 
-class ClientStateMachine(private val scope: CoroutineScope) {
+class ClientStateMachine {
 
   private val eventQueue = Channel<ClientAction>(capacity = Channel.UNLIMITED)
 
   private var currentState: ClientState = ClientState.UninitializedPage
 
   fun fire(action: ClientAction) {
-    scope.launch {
+    mainStage.launch {
       eventQueue.send(action)
     }
   }
 
   fun runMainLoop() {
-    scope.launch {
+    mainStage.launch {
       while (true) {
         val action = eventQueue.receive()
         try {

@@ -1,7 +1,11 @@
 package org.jetbrains.projector.client.korge.window
 
 import com.soywiz.klogger.Logger
-import com.soywiz.korge.view.*
+import com.soywiz.korge.view.Container
+import com.soywiz.korge.view.solidRect
+import com.soywiz.korge.view.text
+import com.soywiz.korge.view.xy
+import mainStage
 import org.jetbrains.projector.client.common.canvas.Extensions.argbIntToRgbaString
 import org.jetbrains.projector.client.common.misc.ParamsProvider
 import org.jetbrains.projector.client.korge.state.LafListener
@@ -11,8 +15,6 @@ import org.jetbrains.projector.common.protocol.data.CommonRectangle
 object OnScreenMessenger : LafListener {
 
   private val logger = Logger<OnScreenMessenger>()
-
-  lateinit var mainStage: Stage
 
   private val header by lazy {
     WindowHeader(mainStage).apply {

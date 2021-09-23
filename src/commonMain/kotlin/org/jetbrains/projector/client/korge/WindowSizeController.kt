@@ -1,20 +1,20 @@
 package org.jetbrains.projector.client.korge
 
-import com.soywiz.korge.view.Stage
+import mainStage
 import org.jetbrains.projector.client.common.misc.ParamsProvider
 import org.jetbrains.projector.client.korge.state.ClientStateMachine
 import org.jetbrains.projector.common.protocol.data.CommonIntSize
 import kotlin.math.roundToInt
 
-class WindowSizeController(private val stage: Stage, private val stateMachine: ClientStateMachine) {
+class WindowSizeController(private val stateMachine: ClientStateMachine) {
 
   val currentSize: CommonIntSize
     get() {
       val userScalingRatio = ParamsProvider.USER_SCALING_RATIO
 
       return CommonIntSize(
-        width = (stage.unscaledWidth / userScalingRatio).roundToInt(),
-        height = (stage.unscaledHeight / userScalingRatio).roundToInt()
+        width = (mainStage.unscaledWidth / userScalingRatio).roundToInt(),
+        height = (mainStage.unscaledHeight / userScalingRatio).roundToInt()
       )
     }
 
