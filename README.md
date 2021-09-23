@@ -64,6 +64,8 @@ We didn't have much time to implement all the features available in the original
 * Clipboard sync between the client and the server
 * Markdown preview
 * Speculative typing prototype
+* Resizing the whole window in real time (you can resize the window to the desired size before the connection though)
+* HiDPI
 
 ## License
 This project [MIT](LICENSE) licensed.
