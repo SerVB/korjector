@@ -5,11 +5,11 @@
 [![Building](https://github.com/SerVB/korjector/actions/workflows/build.yml/badge.svg)](https://github.com/SerVB/korjector/actions/workflows/build.yml)
 [![Testing](https://github.com/SerVB/korjector/actions/workflows/test.yml/badge.svg)](https://github.com/SerVB/korjector/actions/workflows/test.yml)
 
-![logo](https://imgur.com/AigeOJj)
+![logo](https://i.imgur.com/AigeOJj.png)
 
 **Korjector** is a [KorGE](https://github.com/korlibs/korge) game engine-based multiplatform client for [Projector](https://github.com/JetBrains/projector-server). An internal JetBrains Hackathon 2021 project to demonstrate that a Projector client can be created in less than 48 hours for any OS that supports decent canvas 2D API.
 
-![demonstration](https://imgur.com/NJetqd7)
+![demonstration](demo.gif)
 
 ### Installation
 If you want to build a project from the source, you should run the following commands
