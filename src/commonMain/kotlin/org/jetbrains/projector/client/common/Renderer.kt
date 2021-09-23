@@ -3,6 +3,7 @@ package org.jetbrains.projector.client.common
 import com.soywiz.klogger.Logger
 import com.soywiz.korim.font.DefaultTtfFont
 import com.soywiz.korim.font.Font
+import com.soywiz.korim.font.TtfFont
 import org.jetbrains.projector.client.common.canvas.Canvas.ImageSource
 import org.jetbrains.projector.client.common.canvas.Context2d
 import org.jetbrains.projector.client.common.canvas.Context2d.FillRule
@@ -17,6 +18,7 @@ import org.jetbrains.projector.client.common.canvas.buffering.RenderingSurface
 import org.jetbrains.projector.client.common.misc.ParamsProvider
 import org.jetbrains.projector.client.common.misc.ParamsProvider.REPAINT_AREA
 import org.jetbrains.projector.client.common.misc.RepaintAreaSetting
+import org.jetbrains.projector.client.korge.misc.FontFaceAppender
 import org.jetbrains.projector.common.misc.Defaults
 import org.jetbrains.projector.common.misc.Do
 import org.jetbrains.projector.common.protocol.data.*
@@ -287,7 +289,13 @@ class Renderer(private val renderingSurface: RenderingSurface) {
 
       val width = textDimensions.x
       translate(x, y)
-      scale(desiredWidth / width, 1.0)
+      // todo: seems text width is measured improperly in korge, let's skip scaling for now for monospace text
+      val needScaling = (canvasState.font as? TtfFont)?.ttfCompleteName.orEmpty()
+        .contains("mono", ignoreCase = true)
+        .not()
+      if (needScaling) {
+        scale(desiredWidth / width, 1.0)
+      }
       fillText(string, 0.0, 0.0)
 
       restore()
@@ -414,19 +422,20 @@ class Renderer(private val renderingSurface: RenderingSurface) {
   }
 
   fun setFont(fontId: Short?, fontSize: Int, ligaturesOn: Boolean) {
-//    val font = if (fontId == null) {
-//      logger.debug { "null is used as a font ID. Using Arial..." }
-//
-//      "${fontSize}px Arial"
-//    }
-//    else {
-//      "${fontSize}px ${fontId.toFontFaceName()}"
-//    }
+    val font = if (fontId == null) {
+      logger.debug { "null is used as a font ID. Using default..." }
 
-    requestedState.font = DefaultTtfFont  // todo
+      DefaultTtfFont
+    } else {
+      FontFaceAppender.getFont(fontId) ?: run {
+        logger.debug { "font $fontId not found. Using default..." }
+        DefaultTtfFont
+      }
+    }
+
+    requestedState.font = font
     requestedState.fontSize = fontSize.toDouble()
     renderingSurface.canvas.fontVariantLigatures = ligaturesOn.toLigatureVariant()
-    renderingSurface.canvas
   }
 
   private fun Boolean.toLigatureVariant(): String {

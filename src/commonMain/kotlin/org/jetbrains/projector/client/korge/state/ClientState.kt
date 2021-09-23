@@ -13,6 +13,7 @@ import org.jetbrains.projector.client.common.protocol.KotlinxJsonToServerHandsha
 import org.jetbrains.projector.client.korge.ServerEventsProcessor
 import org.jetbrains.projector.client.korge.WindowSizeController
 import org.jetbrains.projector.client.korge.misc.ClientStats
+import org.jetbrains.projector.client.korge.misc.FontFaceAppender
 import org.jetbrains.projector.client.korge.misc.PingStatistics
 import org.jetbrains.projector.client.korge.protocol.SupportedTypesProvider
 import org.jetbrains.projector.client.korge.window.OnScreenMessenger
@@ -209,7 +210,7 @@ sealed class ClientState {
           is ToClientHandshakeSuccessEvent -> {
             command.colors?.let { ProjectorUI.setColors(it) }
 
-//            FontFaceAppender.removeAppendedFonts()  // todo
+            FontFaceAppender.removeAppendedFonts()
 
             OnScreenMessenger.showText(
               "Loading fonts...",
@@ -217,27 +218,22 @@ sealed class ClientState {
               canReload = false
             )
 
-            // todo
-//            command.fontDataHolders.forEach { fontDataHolder ->
-//              FontFaceAppender.appendFontFaceToPage(fontDataHolder.fontId, fontDataHolder.fontData) { loadedFontCount ->
-//                if (loadedFontCount == command.fontDataHolders.size) {
-//                  logger.info { "${command.fontDataHolders.size} font(s) loaded" }
-//                  OnScreenMessenger.hide()
-//
-//                  stateMachine.fire(ClientAction.LoadAllFonts)
-//                }
-//                else {
-//                  OnScreenMessenger.showText(
-//                    "Loading fonts",
-//                    "$loadedFontCount of ${command.fontDataHolders.size} font(s) loaded.",
-//                    canReload = false
-//                  )
-//                }
-//              }
-//            }
-            logger.info { "${command.fontDataHolders.size} font(s) loaded" }
-            OnScreenMessenger.hide()
-            stateMachine.fire(ClientAction.LoadAllFonts)
+            command.fontDataHolders.forEach { fontDataHolder ->
+              FontFaceAppender.appendFontFaceToPage(fontDataHolder.fontId, fontDataHolder.fontData) { loadedFontCount ->
+                if (loadedFontCount == command.fontDataHolders.size) {
+                  logger.info { "${command.fontDataHolders.size} font(s) loaded" }
+                  OnScreenMessenger.hide()
+
+                  stateMachine.fire(ClientAction.LoadAllFonts)
+                } else {
+                  OnScreenMessenger.showText(
+                    "Loading fonts",
+                    "$loadedFontCount of ${command.fontDataHolders.size} font(s) loaded.",
+                    canReload = false
+                  )
+                }
+              }
+            }
 
             LoadingFonts(
               stateMachine = stateMachine,

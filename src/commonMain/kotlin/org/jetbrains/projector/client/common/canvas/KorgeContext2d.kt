@@ -2,7 +2,6 @@ package org.jetbrains.projector.client.common.canvas
 
 import com.soywiz.korge.view.Image
 import com.soywiz.korim.color.Colors
-import com.soywiz.korim.font.DefaultTtfFont
 import com.soywiz.korim.font.Font
 import com.soywiz.korim.paint.GradientPaint
 import com.soywiz.korim.vector.CompositeMode
@@ -189,7 +188,7 @@ internal class KorgeContext2d(private val myCanvas: Image) : Context2d {
   }
 
   override fun setFont(f: Font, size: Double) {
-    myContext2d.font = DefaultTtfFont
+    myContext2d.font = f
     myContext2d.fontSize = size
   }
 
