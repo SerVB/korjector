@@ -12,6 +12,7 @@ import org.jetbrains.projector.client.common.protocol.KotlinxJsonToClientHandsha
 import org.jetbrains.projector.client.common.protocol.KotlinxJsonToServerHandshakeEncoder
 import org.jetbrains.projector.client.korge.ServerEventsProcessor
 import org.jetbrains.projector.client.korge.WindowSizeController
+import org.jetbrains.projector.client.korge.input.InputController
 import org.jetbrains.projector.client.korge.misc.ClientStats
 import org.jetbrains.projector.client.korge.misc.FontFaceAppender
 import org.jetbrains.projector.client.korge.misc.PingStatistics
@@ -364,14 +365,14 @@ sealed class ClientState {
       onHandshakeFinished()
     }
 
-//    private val inputController = InputController(
-//      openingTimeStamp = openingTimeStamp,
-//      stateMachine = stateMachine,
-//      windowManager = windowManager,
-//      windowPositionByIdGetter = windowManager::get,
-//    ).apply {
-//      addListeners()
-//    }  // todo
+    private val inputController = InputController(
+      openingTimeStamp = openingTimeStamp,
+      stateMachine = stateMachine,
+      windowManager = windowManager,
+      windowPositionByIdGetter = windowManager::get,
+    ).apply {
+      addListeners()
+    }
 
 //    private val typing = when (ParamsProvider.SPECULATIVE_TYPING) {
 //      false -> Typing.NotSpeculativeTyping
@@ -413,7 +414,7 @@ sealed class ClientState {
         val decodeTimestamp = TimeStamp.current
         serverEventsProcessor.process(
           commands,
-          pingStatistics/*, typing, markdownPanelManager, inputController*/
+          pingStatistics/*, typing, markdownPanelManager*/, inputController
         )  // todo
         val drawTimestamp = TimeStamp.current
 
@@ -516,8 +517,8 @@ sealed class ClientState {
             drawPendingEvents.cancel()
             pingStatistics.onClose()
             windowDataEventsProcessor.onClose()
+            inputController.removeListeners()
             // todo:
-//            inputController.removeListeners()
 //            windowSizeController.removeListener()
 //            typing.dispose()
 //            markdownPanelManager.disposeAll()
@@ -544,7 +545,7 @@ sealed class ClientState {
 
       drawPendingEvents.cancel()
       pingStatistics.onClose()
-//      inputController.removeListeners()  // todo
+      inputController.removeListeners()
 //      windowSizeController.removeListener()  // todo
 //      typing.dispose()  // todo
 //      connectionWatcher.removeWatcher()  // todo

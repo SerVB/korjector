@@ -160,15 +160,15 @@ class Window(windowData: WindowData, private val stateMachine: ClientStateMachin
   }
 
   fun contains(x: Int, y: Int): Boolean {
-    return false // border.bounds.contains(x, y)  // todo
+    return bounds.contains(x, y) || header?.bounds?.contains(x, y) ?: false  // todo: deligate to border
   }
 
   fun onMouseDown(x: Int, y: Int): DragEventsInterceptor? {
-    return null  //border.onMouseDown(x, y) ?: header?.onMouseDown(x, y)  // todo
+    return /*border.onMouseDown(x, y) ?:*/ header?.onMouseDown(x, y)  // todo
   }
 
   fun onMouseClick(x: Int, y: Int): DragEventsInterceptor? {
-    return null  // border.onMouseClick(x, y) ?: header?.onMouseClick(x, y)  // todo
+    return /*border.onMouseClick(x, y) ?:*/ header?.onMouseClick(x, y)  // todo
   }
 
   private fun onResize(deltaX: Int, deltaY: Int, direction: ResizeDirection) {

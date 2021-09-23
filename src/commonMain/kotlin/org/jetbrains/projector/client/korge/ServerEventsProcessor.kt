@@ -2,6 +2,7 @@ package org.jetbrains.projector.client.korge
 
 import com.soywiz.klogger.Logger
 import org.jetbrains.projector.client.common.SingleRenderingSurfaceProcessor.Companion.shrinkByPaintEvents
+import org.jetbrains.projector.client.korge.input.InputController
 import org.jetbrains.projector.client.korge.misc.PingStatistics
 import org.jetbrains.projector.client.korge.state.ProjectorUI
 import org.jetbrains.projector.client.korge.window.OnScreenMessenger
@@ -13,8 +14,9 @@ class ServerEventsProcessor(private val windowDataEventsProcessor: WindowDataEve
 
   @OptIn(ExperimentalStdlibApi::class)
   fun process(
-    commands: ToClientMessageType, pingStatistics: PingStatistics/*, typing: Typing, markdownPanelManager: MarkdownPanelManager,
-              inputController: InputController*/
+    commands: ToClientMessageType,
+    pingStatistics: PingStatistics/*, typing: Typing, markdownPanelManager: MarkdownPanelManager*/,
+    inputController: InputController
   ) {
     val drawCommandsEvents = mutableListOf<ServerDrawCommandsEvent>()
 
