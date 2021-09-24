@@ -40,7 +40,13 @@ After it, run this client.
 .\gradlew.bat runJvm  # for Windows 
 ```
 
-Also you can run it on iOS Simulator:
+This will open a Java-based app locally. You can edit the URL (defaults to a locally launched Projector server) and connect to the server.
+
+For some reason, the client hangs after some time of running, and it was no luck to debug it during the hackathon.
+
+Also, KorGE allows compiling to JS (Web), Native, Android, and iOS targets, but we weren't able to handle them during the hackathon.
+
+However, it's possible to install the app on iOS:
 ```shell
 ./gradlew iosBuildSimulatorDebug # Creates an APP file
 ./gradlew installIosSimulatorDebug # Installs an APP file in the simulator
@@ -52,12 +58,6 @@ And Android:
 ./gradlew installAndroidDebug # Installs an APK in all the connected devices
 ./gradlew runAndroidEmulatorDebug # Runs the application in an emulator
 ```
-
-This will open a Java-based app locally. You can edit the URL (defaults to a locally launched Projector server) and connect to the server.
-
-For some reason, the client hangs after some time of running, and it was no luck to debug it during the hackathon.
-
-Also, KorGE allows compiling to JS (Web), Native, Android, and iOS targets, but we weren't able to handle them during the hackathon.
 
 #### Supported features
 
