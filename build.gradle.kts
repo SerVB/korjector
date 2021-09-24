@@ -5,6 +5,8 @@ plugins {
 korge {
   targetJvm()
   targetJs()
+  targetIos()
+  targetAndroidIndirect()
 
   serializationJson()
 }
