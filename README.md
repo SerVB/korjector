@@ -40,6 +40,19 @@ After it, run this client.
 .\gradlew.bat runJvm  # for Windows 
 ```
 
+Also you can run it on iOS Simulator:
+```shell
+./gradlew iosBuildSimulatorDebug # Creates an APP file
+./gradlew installIosSimulatorDebug # Installs an APP file in the simulator
+./gradlew runIosSimulatorDebug # Runs the APP in the simulator
+```
+
+And Android:
+```shell
+./gradlew installAndroidDebug # Installs an APK in all the connected devices
+./gradlew runAndroidEmulatorDebug # Runs the application in an emulator
+```
+
 This will open a Java-based app locally. You can edit the URL (defaults to a locally launched Projector server) and connect to the server.
 
 For some reason, the client hangs after some time of running, and it was no luck to debug it during the hackathon.
