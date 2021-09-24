@@ -46,7 +46,7 @@ For some reason, the client hangs after some time of running, and it was no luck
 
 Also, KorGE allows compiling to JS (Web), Native, Android, and iOS targets, but we weren't able to handle them during the hackathon.
 
-However, it's possible to install the app on iOS:
+However, it's possible to *install* the app on iOS:
 ```shell
 ./gradlew iosBuildSimulatorDebug # Creates an APP file
 ./gradlew installIosSimulatorDebug # Installs an APP file in the simulator
