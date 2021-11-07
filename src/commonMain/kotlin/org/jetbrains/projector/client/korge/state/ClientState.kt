@@ -600,7 +600,7 @@ sealed class ClientState {
 
     private suspend fun createWebSocketConnection(url: String, stateMachine: ClientStateMachine): WebSocketClient? {
       return try {
-        WebSocketClient(url).apply {
+        WebSocketClient(url) {
           onOpen {
             stateMachine.fire(ClientAction.WebSocket.Open(openingTimeStamp = TimeStamp.current.roundToInt()))
           }
