@@ -3,6 +3,7 @@ package org.jetbrains.projector.client.korge.state
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import mainStage
 
 sealed class MessagingPolicy(
   protected val isFlushNeeded: () -> Boolean,
@@ -39,14 +40,12 @@ sealed class MessagingPolicy(
   class Buffered(private val timeout: Int, isFlushNeeded: () -> Boolean, flush: () -> Unit) :
     MessagingPolicy(isFlushNeeded, flush) {
 
-    private val scope = GlobalScope
-
     override fun onHandshakeFinished() {
       flush()
     }
 
     private fun scheduleFlushIfNeeded() {
-      scope.launch {
+      mainStage.launch {
         delay(timeout.toLong())
         flushIfNeeded()
       }
