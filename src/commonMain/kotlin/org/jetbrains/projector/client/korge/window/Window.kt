@@ -5,11 +5,11 @@ import com.soywiz.korge.input.cursor
 import com.soywiz.korge.view.image
 import com.soywiz.korge.view.xy
 import com.soywiz.korgw.GameWindow
-import com.soywiz.korim.bitmap.Bitmap32
-import com.soywiz.korim.color.Colors
+import com.soywiz.korim.bitmap.*
 import mainStage
 import org.jetbrains.projector.client.common.DrawEvent
 import org.jetbrains.projector.client.common.SingleRenderingSurfaceProcessor
+import org.jetbrains.projector.client.common.canvas.*
 import org.jetbrains.projector.client.common.canvas.buffering.createRenderingSurface
 import org.jetbrains.projector.client.common.misc.ImageCacher
 import org.jetbrains.projector.client.common.misc.ParamsProvider
@@ -183,7 +183,7 @@ class Window(windowData: WindowData, private val stateMachine: ClientStateMachin
     stateMachine.fire(ClientAction.AddEvent(ClientWindowCloseEvent(id)))
   }
 
-  private fun createCanvas() = mainStage.image(Bitmap32(42, 42, Colors.TRANSPARENT_BLACK)).apply {
+  private fun createCanvas() = mainStage.image(NativeImageOrBitmap32(42, 42, USE_NATIVE_IMAGE)).apply {
     visible = isShowing
   }
 
