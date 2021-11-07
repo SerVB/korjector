@@ -7,8 +7,10 @@ korge {
   targetJs()
   targetIos()
   targetAndroidIndirect()
+  targetDesktop()
 
   serializationJson()
+  useNewMemoryModel = true
 }
 
 kotlin {
