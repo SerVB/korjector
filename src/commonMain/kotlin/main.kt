@@ -13,6 +13,7 @@ import com.soywiz.korge.view.centerOnStage
 import com.soywiz.korge.view.solidRect
 import com.soywiz.korim.color.Colors
 import com.soywiz.korim.color.RGBA
+import com.soywiz.korim.format.*
 import com.soywiz.korma.geom.Anchor
 import com.soywiz.korma.geom.ScaleMode
 import org.jetbrains.projector.client.common.misc.ParamsProvider
@@ -25,6 +26,8 @@ suspend fun main() = Korge(
     width = 800, height = 600,
     title = "korjector",
 ) {
+    RegisteredImageFormats.register(PNG)
+
     Logger.defaultLevel = Logger.Level.DEBUG
     mainStage = stage
 
