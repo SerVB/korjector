@@ -467,7 +467,7 @@ sealed class ClientState {
 
           if (drawEventCount > 0) {
             logger.debug {
-              "Timestamp is ${roundToTwoDecimals(processTimestamp)}:\t" +
+              "Timestamp is ${processTimestamp.toLong()}:\t" +
                       "draw events count: $drawEventCount,\t" +
                       "decompressing: ${roundToTwoDecimals(decompressingTimeMs)} ms,\t\t" +
                       "decoding: ${roundToTwoDecimals(decodingTimeMs)} ms,\t\t" +
