@@ -5,16 +5,13 @@ import com.soywiz.korge.input.onOut
 import com.soywiz.korge.view.Container
 import com.soywiz.korge.view.image
 import com.soywiz.korge.view.xy
-import com.soywiz.korim.bitmap.Bitmap
-import com.soywiz.korim.bitmap.Bitmap32
-import com.soywiz.korim.color.Colors
+import com.soywiz.korim.bitmap.*
 import com.soywiz.korim.font.DefaultTtfFont
 import com.soywiz.korim.format.SVG
 import com.soywiz.korim.format.readBitmap
 import com.soywiz.korio.file.std.resourcesVfs
 import com.soywiz.korma.geom.IPoint
-import org.jetbrains.projector.client.common.canvas.KorgeCanvas
-import org.jetbrains.projector.client.common.canvas.PaintColor
+import org.jetbrains.projector.client.common.canvas.*
 import org.jetbrains.projector.client.common.canvas.buffering.createRenderingSurface
 import org.jetbrains.projector.client.common.misc.ParamsProvider
 import org.jetbrains.projector.client.korge.state.LafListener
@@ -37,7 +34,7 @@ class WindowHeader(parent: Container, var title: String? = null) : DragEventsInt
 
   private var closeIcon = closeIconNormal
 
-  private val canvas = parent.image(Bitmap32(42, 42, Colors.TRANSPARENT_BLACK))
+  private val canvas = parent.image(NativeImageOrBitmap32(42, 42, USE_NATIVE_IMAGE))
   private val headerRenderingSurface = createRenderingSurface(canvas)
 
   private var dragStarted = false
