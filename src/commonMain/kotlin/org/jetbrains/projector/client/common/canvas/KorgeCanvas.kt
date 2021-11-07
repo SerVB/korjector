@@ -13,13 +13,13 @@ class KorgeCanvas(val myCanvas: Image) : Canvas {
   override var width: Int
     get() = myCanvas.width.toInt()
     set(value) {
-      myCanvas.bitmapSrc = Bitmap32(value, height, Colors.TRANSPARENT_BLACK).slice()
+      myCanvas.bitmapSrc = NativeImageOrBitmap32(value, height, USE_NATIVE_IMAGE).slice()
     }
 
   override var height: Int
     get() = myCanvas.height.toInt()
     set(value) {
-      myCanvas.bitmapSrc = Bitmap32(width, value, Colors.TRANSPARENT_BLACK).slice()
+      myCanvas.bitmapSrc = NativeImageOrBitmap32(width, value, USE_NATIVE_IMAGE).slice()
     }
 
   override var fontVariantLigatures: String
