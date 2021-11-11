@@ -12,7 +12,6 @@ korge {
   targetDesktop()
 
   serializationJson()
-  useNewMemoryModel = true
 }
 
 kotlin {
