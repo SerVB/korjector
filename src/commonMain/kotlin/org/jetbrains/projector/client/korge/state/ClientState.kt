@@ -330,22 +330,22 @@ sealed class ClientState {
 
     private val serverEventsProcessor = ServerEventsProcessor(windowDataEventsProcessor)
 
-    private val messagingPolicy = (
-            ParamsProvider.FLUSH_DELAY
-              ?.let {
-                MessagingPolicy.Buffered(
-                  timeout = it,
-                  isFlushNeeded = { eventsToSend.isNotEmpty() },
-                  flush = { stateMachine.fire(ClientAction.Flush) }
-                )
-              }
-              ?: MessagingPolicy.Unbuffered(
-                isFlushNeeded = { eventsToSend.isNotEmpty() },
-                flush = { stateMachine.fire(ClientAction.Flush) }
-              )
-            ).apply {
-        onHandshakeFinished()
+    private val messagingPolicy: MessagingPolicy = run {
+      if (ParamsProvider.FLUSH_DELAY != null) {
+        MessagingPolicy.Buffered(
+          timeout = ParamsProvider.FLUSH_DELAY!!,
+          isFlushNeeded = { eventsToSend.isNotEmpty() },
+          flush = { stateMachine.fire(ClientAction.Flush) }
+        )
+      } else {
+        MessagingPolicy.Unbuffered(
+          isFlushNeeded = { eventsToSend.isNotEmpty() },
+          flush = { stateMachine.fire(ClientAction.Flush) }
+        )
       }
+    }.also {
+      it.onHandshakeFinished()
+    }
 
 //    private val sentReceivedBadgeShower: SentReceivedBadgeShower = if (ParamsProvider.SHOW_SENT_RECEIVED) {
 //      DivSentReceivedBadgeShower()
