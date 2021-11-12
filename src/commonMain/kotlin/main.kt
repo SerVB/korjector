@@ -18,7 +18,9 @@ import com.soywiz.korma.geom.Anchor
 import com.soywiz.korma.geom.ScaleMode
 import org.jetbrains.projector.client.common.misc.ParamsProvider
 import org.jetbrains.projector.client.korge.Application
+import kotlin.native.concurrent.*
 
+@ThreadLocal
 lateinit var mainStage: Stage
     private set
 

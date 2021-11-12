@@ -19,9 +19,11 @@ import org.jetbrains.projector.client.korge.state.ProjectorUI
 import org.jetbrains.projector.common.protocol.data.CommonRectangle
 import org.jetbrains.projector.common.protocol.data.Point
 import kotlin.math.roundToInt
+import kotlin.native.concurrent.*
 
 class WindowHeader(parent: Container, var title: String? = null) : DragEventsInterceptor, LafListener {
 
+  @ThreadLocal
   companion object {
     lateinit var closeIconNormal: Bitmap
     lateinit var closeIconHover: Bitmap

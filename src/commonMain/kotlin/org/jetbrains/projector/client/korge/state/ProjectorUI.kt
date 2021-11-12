@@ -1,12 +1,14 @@
 package org.jetbrains.projector.client.korge.state
 
 import org.jetbrains.projector.common.protocol.toClient.ServerWindowColorsEvent
+import kotlin.native.concurrent.ThreadLocal
 
 interface LafListener {
   fun lookAndFeelChanged()
 }
 
 // Name of this class was chosen based on JBUI class.
+@ThreadLocal
 object ProjectorUI {
   var windowHeaderActiveBackgroundArgb = 0xFFE6E6E6.toInt()
     private set

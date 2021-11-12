@@ -5,7 +5,9 @@ import com.soywiz.korim.font.TtfFont
 import com.soywiz.krypto.encoding.fromBase64
 import org.jetbrains.projector.client.common.canvas.Extensions.toFontFaceName
 import org.jetbrains.projector.common.protocol.data.TtfFontData
+import kotlin.native.concurrent.ThreadLocal
 
+@ThreadLocal
 object FontFaceAppender {
 
   private var loadedFonts = 0

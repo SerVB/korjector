@@ -5,7 +5,9 @@ import org.jetbrains.projector.client.common.misc.TimeStamp
 import org.jetbrains.projector.common.statistics.Average
 import org.jetbrains.projector.common.statistics.Rate
 import org.jetbrains.projector.common.statistics.RoundingStrategy
+import kotlin.native.concurrent.ThreadLocal
 
+@ThreadLocal
 object ClientStats {
 
   private val logger = Logger<ClientStats>()

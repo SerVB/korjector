@@ -1,7 +1,9 @@
 package org.jetbrains.projector.client.common.misc
 
 import com.soywiz.korio.net.URL
+import kotlin.native.concurrent.*
 
+@ThreadLocal
 object ParamsProvider {
 
   val SYSTEM_SCALING_RATIO
