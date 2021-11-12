@@ -11,7 +11,9 @@ import org.jetbrains.projector.client.common.misc.ParamsProvider
 import org.jetbrains.projector.client.korge.state.LafListener
 import org.jetbrains.projector.client.korge.state.ProjectorUI
 import org.jetbrains.projector.common.protocol.data.CommonRectangle
+import kotlin.native.concurrent.*
 
+@ThreadLocal
 object OnScreenMessenger : LafListener {
 
   private val logger = Logger<OnScreenMessenger>()
